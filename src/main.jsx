@@ -1,12 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, Clock3, Landmark, MapPin, RotateCcw, Search, X } from 'lucide-react';
+import { ArrowLeft, Clock3, ExternalLink, Landmark, MapPin, RotateCcw, Search, X } from 'lucide-react';
 import { loadHeritageSites } from './heritageData';
 import './styles.css';
 
 const DESIGNATIONS = ['전체', '국보', '보물', '사적', '명승', '천연기념물'];
 const ERAS = ['전체', '선사', '삼국', '통일신라', '조선', '대한제국', '일제강점기', '시대 미상'];
 const MINI_ERAS = ERAS.filter(era => era !== '전체');
+
+function sourceUrl(item) {
+  const params = new URLSearchParams({
+    ccbaKdcd: item.ccbaKdcd,
+    ccbaAsno: item.ccbaAsno,
+    ccbaCtcd: item.ccbaCtcd,
+    ccbaCpno: item.ccbaCpno,
+    pageNo: '1_1_1_0',
+  });
+  return `https://www.heritage.go.kr/heri/cul/culSelectDetail.do?${params}`;
+}
 
 function eraOf(period = '') {
   const value = String(period).trim();
@@ -85,7 +96,7 @@ function Card({ item, onOpen }) {
 
 function Detail({ item, onClose }) {
   const itemEra = eraOf(item.period);
-  return <main className="detail-page"><button className="back-button" onClick={onClose}><ArrowLeft/> 목록으로</button><article className="detail-card"><div className="detail-image"><img src={item.imageUrl} alt={`${item.name} 대표 이미지`}/></div><div className="detail-content"><div className="badges"><b>{item.designation}</b><span><MapPin/> {item.district}</span><span><Clock3/> {itemEra}</span></div><h1>{item.name}</h1><p className="address">{item.address}</p><MiniTimeline era={itemEra} detail/><section className="summary"><h3>한 문장으로 보기</h3><p>{item.summaryKid}</p></section><section><h3>쉽게 알아보기</h3><p>{item.descriptionKid}</p></section><section><h3>왜 중요할까요?</h3><p>{item.whyImportantKid}</p></section></div></article></main>;
+  return <main className="detail-page"><button className="back-button" onClick={onClose}><ArrowLeft/> 목록으로</button><article className="detail-card"><div className="detail-image" style={{ position: 'relative' }}><img src={item.imageUrl} alt={`${item.name} 대표 이미지`}/><div className="image-source">사진 출처: 국가유산청</div></div><div className="detail-content"><div className="badges"><b>{item.designation}</b><span><MapPin/> {item.district}</span><span><Clock3/> {itemEra}</span></div><h1>{item.name}</h1><p className="address">{item.address}</p><MiniTimeline era={itemEra} detail/><section className="summary"><h3>한 문장으로 보기</h3><p>{item.summaryKid}</p></section><section><h3>쉽게 알아보기</h3><p>{item.descriptionKid}</p></section><section><h3>왜 중요할까요?</h3><p>{item.whyImportantKid}</p></section><section className="source-box"><h3>출처 및 이용 안내</h3><ul className="source-list"><li><b>국가유산 정보 출처:</b> <a href="https://www.khs.go.kr" target="_blank" rel="noreferrer">국가유산청 국가유산 OpenAPI</a></li><li><b>사진 출처:</b> <a href="https://www.khs.go.kr" target="_blank" rel="noreferrer">국가유산청</a></li><li><b>쉬운 설명:</b> 국가유산청 공개 정보를 바탕으로 초등학생 눈높이에 맞게 재구성</li></ul><a href={sourceUrl(item)} target="_blank" rel="noreferrer">국가유산포털에서 원문 확인 <ExternalLink/></a><small>원본 식별자: {item.ccbaKdcd}-{item.ccbaAsno}-{item.ccbaCtcd}</small></section></div></article></main>;
 }
 
 function Header() { return <header><div className="brand"><span className="brand-mark"><Landmark/></span><b>서울 국가유산 탐험대</b></div><span className="header-note">초등 3·4학년 사회</span></header>; }
@@ -107,7 +118,7 @@ function App() {
     <section className="results"><div className="current-filter"><strong>📍 {district} · ⏳ {era === '전체' ? '모든 시대' : `${era} 시대`} · {filtered.length}개의 국가유산</strong><button className="reset-button" onClick={reset}><RotateCcw/> 처음으로</button></div>
       <div className="secondary-filters"><div className="designation-filters">{DESIGNATIONS.map(value => <button key={value} className={`filter-chip ${designation === value ? 'active' : ''}`} onClick={() => setDesignation(value)}>{value}</button>)}</div><label className="search-field"><Search/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="국가유산 이름 검색"/></label></div>
       {status === 'loading' ? <div className="state">데이터를 불러오는 중...</div> : status === 'error' ? <div className="state">데이터를 불러오지 못했습니다.</div> : !filtered.length ? <div className="state"><X/>현재 이 지역에서 찾은 국가유산이 없어요. 다른 지역도 탐험해 보세요!</div> : <div className="site-grid">{filtered.map(item => <Card key={item.id} item={item} onOpen={setSelected}/>)}</div>}
-    </section></div>}</main></>;
+    </section></div>}<footer className="site-source"><span>자료 출처: 국가유산청 국가유산포털</span><a href="https://www.heritage.go.kr" target="_blank" rel="noreferrer">공식 사이트 <ExternalLink/></a></footer></main></>;
 }
 
 createRoot(document.getElementById('root')).render(<App/>);
